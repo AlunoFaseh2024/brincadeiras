@@ -1,9 +1,9 @@
 import os
 import hashlib
 import shutil
-from pdf2image import convert_from_path
 from PIL import Image
 import pyzbar.pyzbar as pyzbar
+import fitz  # PyMuPDF
 
 def decode_qr_code(image):
     decoded_objects = pyzbar.decode(image)
@@ -16,15 +16,25 @@ def recreate_original_file(pdf_path):
     if not os.path.exists(temp_dir):
         os.makedirs(temp_dir)
 
-    # Converter as páginas do PDF em imagens
-    pages = convert_from_path(pdf_path)
+    # Converter as páginas do PDF em imagens usando PyMuPDF
+    doc = fitz.open(pdf_path)
     guide_data = None
     qr_data_list = []
 
-    for page_num, page in enumerate(pages):
-        qr_codes = pyzbar.decode(page)
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        
+        # Extrair a imagem na qualidade original
+        pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Aumenta a resolução para 200 DPI
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+        # Decodificar QR codes na imagem
+        qr_codes = pyzbar.decode(img)
+        print(f"Página {page_num + 1}: {len(qr_codes)} QR codes encontrados.")
+        
         for qr_code in qr_codes:
             qr_data = qr_code.data.decode('utf-8')
+            #print(f"QR Code encontrado: {qr_data}")  # Debug: Mostra o QR code encontrado
             if qr_data.startswith('0-'):
                 guide_data = qr_data[2:]
             else:
@@ -38,6 +48,9 @@ def recreate_original_file(pdf_path):
     file_name = guide_parts[0].split("{")[1].split("}")[0]
     file_md5 = guide_parts[1].split("(")[1].split(")")[0]
     total_parts = int(guide_parts[2].split("[")[1].split("]")[0])
+
+    print(f"Total de partes esperadas: {total_parts}")
+    print(f"Total de QR codes encontrados: {len(qr_data_list)}")
 
     if len(qr_data_list) != total_parts:
         raise ValueError("Não foi encontrado/escaneado todos os Qr Codes")
