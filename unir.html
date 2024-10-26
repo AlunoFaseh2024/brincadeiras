@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Unir Arquivos</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>   
+    <h1>Unir Arquivos</h1>
+
+    <form id="fileForm">
+        <h2>Selecione os arquivos a serem unidos</h2>
+        <p>Coloque todos na mesma pasta e selecione todos de uma vez.</p>
+
+        <input type="file" id="fileInput" multiple />
+        <br><br>
+        <p>Clique em unir arquivos, o arquivo unificado será baixado automaticamente.</p>
+        <button type="button" onclick="joinFiles()">Unir Arquivos</button>
+    </form>
+
+    <script>
+        async function joinFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = Array.from(fileInput.files); // Convertendo FileList em Array
+
+            if (files.length < 2) {
+                alert('Por favor, selecione pelo menos dois arquivos para unir.');
+                return;
+            }
+
+            // Ordenar os arquivos com base no nome
+            files.sort((a, b) => a.name.localeCompare(b.name));
+
+            const combinedData = await combineFiles(files);
+            const combinedFile = new Blob([combinedData], { type: files[0].type });
+
+            const a = document.createElement('a');
+            const fileName = generateRandomName(12); // Gera um nome de arquivo de 12 caracteres aleatórios
+            const url = URL.createObjectURL(combinedFile);
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+
+            URL.revokeObjectURL(url);
+        }
+
+        async function combineFiles(files) {
+            let totalLength = 0;
+            for (const file of files) {
+                totalLength += file.size;
+            }
+
+            const combinedData = new Uint8Array(totalLength);
+            let offset = 0;
+
+            for (const file of files) {
+                const fileData = await readFile(file);
+                combinedData.set(fileData, offset);
+                offset += fileData.length;
+            }
+
+            return combinedData;
+        }
+
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(new Uint8Array(reader.result));
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function generateRandomName(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+    </script>
+</body>
+
+</html>

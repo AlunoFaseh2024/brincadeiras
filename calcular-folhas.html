@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de folhas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>Calculadora de folhas</h2>
+    <label for="quantidadeInput">Digite a quantidade:</label>
+    <input type="number" id="quantidadeInput">
+    <select id="unidadeInput">
+        <option value="KB">KB</option>
+        <option value="MB">MB</option>
+        <option value="B">B</option>
+    </select>
+    <button onclick="calcular()">Calcular</button>
+    <p id="resultado"></p>
+
+    <script>
+        function calcular() {
+            var quantidade = parseFloat(document.getElementById("quantidadeInput").value);
+            var unidade = document.getElementById("unidadeInput").value;
+
+            var bytes;
+            if (unidade === "KB") {
+                bytes = quantidade * 1024;
+            } else if (unidade === "MB") {
+                bytes = quantidade * 1024 * 1024;
+            } else { // Unidade em Bytes (B)
+                bytes = quantidade;
+            }
+
+            var qrCodes = Math.ceil(bytes / 2900); // Calculando a quantidade de QR Codes necessários
+            var folhas = Math.ceil(qrCodes / 6); // Calculando a quantidade de folhas necessárias
+
+            document.getElementById("resultado").innerHTML = "Você precisará de " + folhas + " folha(s) para armazenar " + quantidade + " " + unidade + ".";
+        }
+    </script>
+</body>
+</html>

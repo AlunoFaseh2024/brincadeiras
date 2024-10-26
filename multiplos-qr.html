@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Converter Arquivo em QR Code</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+    .qr-code-container {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .qr-code {
+      display: inline-block;
+      margin: 0 10px;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Converter Arquivo em QR Code</h1>
+  <input type="file" id="fileInput">
+  <button onclick="convertFileToQRCode()">Converter</button>
+  <div id="qrCodeContainer"></div>
+
+  <script>
+    function convertFileToQRCode() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      const qrCodeContainer = document.getElementById('qrCodeContainer');
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const binaryData = event.target.result;
+          const maxQRCodeDataSize = 2953; // Tamanho máximo de dados em um QR code
+          let currentIndex = 0;
+          let qrCodeCount = 1;
+
+          while (currentIndex < binaryData.length) {
+            const qrCodeData = binaryData.slice(currentIndex, currentIndex + maxQRCodeDataSize);
+            const qr = new QRious({
+              value: qrCodeData,
+              size: 500
+            });
+
+            const qrCodeContainerElement = document.createElement('div');
+            qrCodeContainerElement.classList.add('qr-code-container');
+
+            const fileNameElement = document.createElement('p');
+            fileNameElement.textContent = `${file.name} (${qrCodeCount}/${Math.ceil(binaryData.length / maxQRCodeDataSize)})`;
+            qrCodeContainerElement.appendChild(fileNameElement);
+
+            const qrCodeElement = document.createElement('div');
+            qrCodeElement.classList.add('qr-code');
+            qrCodeElement.appendChild(qr.image);
+            qrCodeContainerElement.appendChild(qrCodeElement);
+
+            qrCodeContainer.appendChild(qrCodeContainerElement);
+
+            currentIndex += maxQRCodeDataSize;
+            qrCodeCount++;
+          }
+        };
+        reader.readAsBinaryString(file);
+      }
+    }
+  </script>
+</body>
+</html>

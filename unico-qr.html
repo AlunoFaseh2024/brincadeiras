@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Converter Arquivo em QR Code</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <style>
+    .error-message {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Converter Arquivo em QR Code</h1>
+  <input type="file" id="fileInput">
+  <button onclick="convertFileToQRCode()">Converter</button>
+  <div id="qrCodeContainer">
+    <canvas id="qrCodeCanvas"></canvas>
+    <div id="errorMessage" class="error-message"></div>
+  </div>
+
+  <script>
+    function convertFileToQRCode() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      const errorMessage = document.getElementById('errorMessage');
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const binaryData = event.target.result;
+          const maxQRCodeDataSize = 2953; // Tamanho máximo de dados em um QR code
+
+          if (binaryData.length > maxQRCodeDataSize) {
+            errorMessage.textContent = "Arquivo muito grande";
+            document.getElementById('qrCodeCanvas').style.display = 'none';
+          } else {
+            errorMessage.textContent = "";
+            document.getElementById('qrCodeCanvas').style.display = 'block';
+            const qr = new QRious({
+              element: document.getElementById('qrCodeCanvas'),
+              value: binaryData,
+              size: 300
+            });
+          }
+        };
+        reader.readAsBinaryString(file);
+      }
+    }
+  </script>
+</body>
+</html>

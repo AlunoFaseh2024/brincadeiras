@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<link rel="icon" href="https://cdn.glitch.global/7eb47365-a7a1-4ecf-941a-ce4845a8fa34/favicon.png?v=1717283441761" type="image/x-icon">
+<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leitura de QR Code e Download de Dados Binários</title>
+<script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+</head>
+<body>
+<h2>Leitura de QR Code e Download do arquivo</h2>
+<p>Apenas funciona com arquivos que foram transformados em apenas um QR Code.</P>
+
+<!-- Input para escolher a imagem -->
+<input type="file" id="fileInput" accept="image/*">
+<br><br>
+
+<!-- Input para digitar o nome do arquivo com extensão -->
+<label for="fileName">Nome do arquivo com extensão:</label>
+<input type="text" id="fileName" placeholder="exemplo.bin">
+<br><br>
+
+<!-- Botão para acionar a leitura e download -->
+<button onclick="readQRCodeAndDownload()">Salvar</button>
+
+<script>
+function readQRCodeAndDownload() {
+    const fileInput = document.getElementById('fileInput');
+    const fileNameInput = document.getElementById('fileName');
+
+    // Verifica se um arquivo foi selecionado
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Por favor, selecione uma imagem com QR code.');
+        return;
+    }
+
+    // Cria um objeto FormData e adiciona a imagem
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+
+    // Faz a requisição para a API do GoQR.me para ler o QR code
+    fetch('https://api.qrserver.com/v1/read-qr-code/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Verifica se há algum dado retornado pela API
+        if (data && data[0] && data[0].symbol[0].data) {
+            // Obtém os dados binários do QR code
+            const qrData = data[0].symbol[0].data;
+
+            // Cria um Blob com os dados binários
+            const bytes = new Uint8Array(qrData.length);
+            for (let i = 0; i < qrData.length; i++) {
+                bytes[i] = qrData.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'application/octet-stream' });
+
+            // Obtém o nome do arquivo e extensão
+            const fileName = fileNameInput.value.trim();
+            if (!fileName) {
+                alert('Por favor, digite um nome de arquivo com extensão.');
+                return;
+            }
+
+            // Faz o download do arquivo
+            saveAs(blob, fileName);
+        } else {
+            alert('Não foi possível ler o QR code.');
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao acessar a API do GoQR.me:', error);
+        alert('Erro ao ler QR code. Verifique a imagem selecionada e tente novamente.');
+    });
+}
+</script>
+
+</body>
+</html>
